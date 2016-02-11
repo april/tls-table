@@ -62,7 +62,7 @@ def get_colorize_chart():
     r = requests.get(MOZILLA_SERVER_SIDE_TLS_URL)
 
     # Try to grab the ciphersuites out the ugly mess that is a wiki page
-    recommendations = [line.split("'''")[1] for line in r.text.split('\n') if "* Ciphersuite: '''" in line]
+    recommendations = [line.split("'''")[1] for line in r.text.split('\n') if "* Ciphersuites: '''" in line]
 
     __colorize_lists.update({
         'Modern': get_colorize_chart_openssl_ciphers(recommendations[0]),
