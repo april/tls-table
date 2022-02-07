@@ -15,6 +15,7 @@ MOZILLA_SERVER_SIDE_TLS_URL = 'https://raw.githubusercontent.com/mozilla/server-
 NSS_URL = 'https://hg.mozilla.org/projects/nss/raw-file/tip/lib/ssl/sslproto.h'
 OPENSSL_URL = 'https://raw.githubusercontent.com/openssl/openssl/master/include/openssl/tls1.h'
 
+
 LIBRARY_ORDER = ['IANA', 'GnuTLS', 'NSS', 'OpenSSL']
 COMPAT_ORDER = ['Old', 'Intermediate', 'Modern']
 
@@ -37,7 +38,7 @@ def usage():
 
 Usage: {0} <output-format> [--colorize]
 
-Valid output formats are: json, mediawiki""".format(sys.argv[0]))
+Valid output formats are: csv, json, mediawiki""".format(sys.argv[0]))
     sys.exit(1)
 
 
@@ -47,7 +48,7 @@ def parse_args():
 
     if len(sys.argv) < 2 or len(sys.argv) > 3:
         usage()
-    if 'json' not in sys.argv[1] and 'mediawiki' not in sys.argv[1]:
+    if 'csv' not in sys.argv[1] and 'json' not in sys.argv[1] and 'mediawiki' not in sys.argv[1]:
         usage()
 
     if '--colorize' in sys.argv:
@@ -69,6 +70,18 @@ def get_colorize_chart():
         'Intermediate': get_colorize_chart_openssl_ciphers(recommendations[1]),
         'Old': get_colorize_chart_openssl_ciphers(recommendations[2])
     })
+
+def print_csv(data):
+    values = []
+    for code_point, cypher in data.items():
+        r = [code_point.replace(',0x','')]
+        r.extend(list(cypher.values()))
+        line = ",".join(r)
+        values.append(line)
+    header = ["hex",] + LIBRARY_ORDER
+    print(','.join(header))
+    for line in values:
+        print(line)
 
 def get_colorize_chart_openssl_ciphers(ciphersuites):
     try:
@@ -144,8 +157,8 @@ def get_hex_values():
         for line in r.text.split('\n'):
             if line.startswith('# define TLS1_CK'):
                 cipher = line.split()[2].split('TLS1_CK_')[-1]
-                hex = line.split()[3]
-                code_point = '0x' + hex[6:8] + ',0x' + hex[8:10]
+                hex_code = line.split()[3]
+                code_point = '0x' + hex_code[6:8] + ',0x' + hex_code[8:10]
 
                 # e.g., ECDHE_RSA_WITH_AES_128_GCM_SHA256 -> 0x0C,0x2F
                 openssl_hex_values[cipher] = code_point
@@ -156,13 +169,14 @@ def get_hex_values():
                 # e.g., ECDHE_RSA_WITH_AES_128_GCM_SHA256 -> ECDHE-RSA-AES128-GCM-SHA256
                 openssl_txt_values[cipher] = text
 
-        for key in openssl_hex_values.iterkeys():
-            if openssl_hex_values[key] in cipher_hex_values:
-                cipher_hex_values[openssl_hex_values[key]]['OpenSSL'] = openssl_txt_values[key]
+        for key, value in openssl_hex_values.items():
+            if value in cipher_hex_values:
+                cipher_hex_values[value]['OpenSSL'] = openssl_txt_values[key]
             else:
                 print('  Warning: code point {code_point} ({cipher}) not in IANA registry'.format(
-                    code_point=openssl_hex_values[key], cipher=key
+                    code_point=value, cipher=key
                 ), file=sys.stderr)
+
     except:
         print('Unable to retrieve or parse OpenSSL cipher list', file=sys.stderr)
 
@@ -224,8 +238,10 @@ def __print_wiki_entry(code_point, ciphers):
 
 # Print everything out
 def print_output(cipher_hex_values, output_format):
+    if output_format == 'csv':
+        print_csv(cipher_hex_values)
     # JSON output is super easy
-    if output_format == 'json':
+    elif output_format == 'json':
         print(json.dumps(cipher_hex_values, indent=2))
 
     elif output_format == 'mediawiki':
@@ -242,7 +258,7 @@ def print_output(cipher_hex_values, output_format):
             del(cipher_hex_values[code_point])
 
         # If they don't have a priority, then go by hex value
-        for code_point, ciphers in cipher_hex_values.iteritems():
+        for code_point, ciphers in cipher_hex_values.items():
             __print_wiki_entry(code_point, ciphers)
 
 
