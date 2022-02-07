@@ -73,14 +73,12 @@ def get_colorize_chart():
 
 def print_csv(data):
     values = []
+    header = ["hex",] + LIBRARY_ORDER
+    print(','.join(header))
     for code_point, cypher in data.items():
         r = [code_point.replace(',0x','')]
         r.extend(list(cypher.values()))
         line = ",".join(r)
-        values.append(line)
-    header = ["hex",] + LIBRARY_ORDER
-    print(','.join(header))
-    for line in values:
         print(line)
 
 def get_colorize_chart_openssl_ciphers(ciphersuites):
