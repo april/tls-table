@@ -156,7 +156,7 @@ def get_hex_values():
                 # e.g., ECDHE_RSA_WITH_AES_128_GCM_SHA256 -> ECDHE-RSA-AES128-GCM-SHA256
                 openssl_txt_values[cipher] = text
 
-        for key in openssl_hex_values.iterkeys():
+        for key in openssl_hex_values.keys():
             if openssl_hex_values[key] in cipher_hex_values:
                 cipher_hex_values[openssl_hex_values[key]]['OpenSSL'] = openssl_txt_values[key]
             else:
@@ -242,7 +242,7 @@ def print_output(cipher_hex_values, output_format):
             del(cipher_hex_values[code_point])
 
         # If they don't have a priority, then go by hex value
-        for code_point, ciphers in cipher_hex_values.iteritems():
+        for code_point, ciphers in cipher_hex_values.items():
             __print_wiki_entry(code_point, ciphers)
 
 
