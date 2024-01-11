@@ -142,8 +142,9 @@ def get_hex_values():
 
         r = requests.get(OPENSSL_URL)
         for line in r.text.split('\n'):
-            if line.startswith('# define TLS1_CK'):
-                cipher = line.split()[2].split('TLS1_CK_')[-1]
+            if line.startswith('# define TLS1_CK') or line.startswith('# define TLS1_3_CK'):
+                cipher = line.split()[2].split('TLS1_CK_')[-1] if 'TLS1_CK_' in line \
+                    else line.split()[2].split('TLS1_3_CK_')[-1]
                 hex = line.split()[3]
                 code_point = '0x' + hex[6:8] + ',0x' + hex[8:10]
 
@@ -154,6 +155,12 @@ def get_hex_values():
                 text = line.split()[3][1:-1]
 
                 # e.g., ECDHE_RSA_WITH_AES_128_GCM_SHA256 -> ECDHE-RSA-AES128-GCM-SHA256
+                openssl_txt_values[cipher] = text
+            elif line.startswith('# define TLS1_3_RFC'):
+                cipher = line.split()[2].split('TLS1_3_RFC_')[-1]
+                text = line.split()[3][1:-1]
+
+                # e.g., TLS_AES_128_GCM_SHA256 -> TLS_AES_128_GCM_SHA256
                 openssl_txt_values[cipher] = text
 
         for key in openssl_hex_values.keys():
